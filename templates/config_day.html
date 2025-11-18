@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h4 class="mb-3">
+  Edit presets for {{ user.name }} - {{ weekday_name }}
+</h4>
+
+<p class="small text-muted">
+  One empty entry is always shown at the top.
+  Use "Add item" to add more lines. Empty lines are ignored when saving.
+</p>
+
+<form method="post">
+  <div id="items-container">
+    <!-- Required first empty entry -->
+    <div class="input-group mb-2 item-row">
+      <span class="input-group-text">New</span>
+      <input type="text" name="items[]" class="form-control"
+             placeholder="Enter item text">
+      <button class="btn btn-outline-secondary remove-row" type="button">
+        &times;
+      </button>
+    </div>
+
+    <!-- Existing templates -->
+    {% for tmpl in templates %}
+      <div class="input-group mb-2 item-row">
+        <span class="input-group-text">{{ loop.index }}</span>
+        <input type="text" name="items[]" class="form-control"
+               value="{{ tmpl.text }}">
+        <button class="btn btn-outline-secondary remove-row" type="button">
+          &times;
+        </button>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="d-grid gap-2 mt-3">
+    <button type="button" id="add-item-btn"
+            class="btn btn-secondary touch-target">
+      Add item
+    </button>
+    <button type="submit"
+            class="btn btn-primary touch-target">
+      Save {{ weekday_name }} list
+    </button>
+    <a href="{{ url_for('config_user', user_id=user.id) }}"
+       class="btn btn-outline-secondary touch-target">
+      Back to user configuration
+    </a>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+  // Simple JS to duplicate an empty row when "Add item" is clicked
+  (function () {
+    const container = document.getElementById("items-container");
+    const addButton = document.getElementById("add-item-btn");
+
+    if (!container || !addButton) {
+      return;
+    }
+
+    function createEmptyRow() {
+      const row = document.createElement("div");
+      row.className = "input-group mb-2 item-row";
+
+      row.innerHTML = `
+        <span class="input-group-text">New</span>
+        <input type="text" name="items[]" class="form-control"
+               placeholder="Enter item text">
+        <button class="btn btn-outline-secondary remove-row" type="button">
+          &times;
+        </button>
+      `;
+      return row;
+    }
+
+    addButton.addEventListener("click", function () {
+      const row = createEmptyRow();
+      container.appendChild(row);
+    });
+
+    // Event delegation for remove buttons.
+    container.addEventListener("click", function (event) {
+      if (event.target.classList.contains("remove-row")) {
+        const row = event.target.closest(".item-row");
+        if (row) {
+          container.removeChild(row);
+        }
+      }
+    });
+  })();
+</script>
+{% endblock %}

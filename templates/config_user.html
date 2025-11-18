@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h4 class="mb-3">Configure user: {{ user.name }}</h4>
+
+<!-- User-level config form -->
+<form method="post" class="mb-4">
+  <div class="mb-3">
+    <label for="email" class="form-label">E-mail address</label>
+    <input type="email"
+           class="form-control"
+           id="email"
+           name="email"
+           value="{{ user.email or '' }}"
+           placeholder="user@example.com">
+  </div>
+
+  <div class="form-check form-switch mb-3">
+    <input class="form-check-input"
+           type="checkbox"
+           id="email_notifications_enabled"
+           name="email_notifications_enabled"
+           {% if user.email_notifications_enabled %}checked{% endif %}>
+    <label class="form-check-label" for="email_notifications_enabled">
+      Send reminder e-mail if all items are un-crossed at the configured time
+      (off by default).
+    </label>
+  </div>
+
+  <div class="mb-3">
+    <label for="email_time" class="form-label">
+      Reminder time (24h, HH:MM)
+    </label>
+    <input type="text"
+           class="form-control"
+           id="email_time"
+           name="email_time"
+           value="{{ user.email_time or '23:59' }}">
+    <div class="form-text">
+      Default is 23:59.
+    </div>
+  </div>
+
+  <button type="submit" class="btn btn-primary w-100 touch-target mb-2">
+    Save configuration
+  </button>
+
+  <a class="btn btn-outline-success w-100 touch-target"
+     href="{{ url_for('export_user', user_id=user.id) }}">
+    Export this user's presets to Excel
+  </a>
+
+  {% if current.is_admin %}
+    <a class="btn btn-outline-secondary w-100 mt-2"
+       href="{{ url_for('users') }}">
+      Back to Users list (Admin)
+    </a>
+  {% endif %}
+</form>
+
+<hr>
+
+<h5 class="mb-3">Configure daily to-do presets</h5>
+<div class="list-group">
+  {% for name in weekday_names %}
+    <a href="{{ url_for('config_day', user_id=user.id, weekday=loop.index0) }}"
+       class="list-group-item list-group-item-action touch-target">
+      {{ name }}
+    </a>
+  {% endfor %}
+</div>
+{% endblock %}

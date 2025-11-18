@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h4 class="mb-3">User management (Admin)</h4>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="card-title">Add new user</h5>
+    <form method="post">
+      <div class="mb-2">
+        <label for="name" class="form-label">Name</label>
+        <input type="text"
+               class="form-control"
+               id="name"
+               name="name"
+               placeholder="User name" required>
+      </div>
+      <div class="mb-2">
+        <label for="email" class="form-label">E-mail (optional)</label>
+        <input type="email"
+               class="form-control"
+               id="email"
+               name="email"
+               placeholder="user@example.com">
+      </div>
+      <button type="submit" class="btn btn-primary w-100 touch-target">
+        Create user
+      </button>
+    </form>
+  </div>
+</div>
+
+<h5 class="mb-2">Existing users</h5>
+<ul class="list-group">
+  {% for user in users %}
+    <li class="list-group-item d-flex flex-column">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <strong>{{ user.name }}</strong>
+          {% if user.is_admin %}
+            <span class="badge bg-dark ms-1">Admin</span>
+          {% endif %}
+        </div>
+        <div class="d-flex gap-1">
+          <a href="{{ url_for('config_user', user_id=user.id) }}"
+             class="btn btn-sm btn-outline-primary">
+            Configure
+          </a>
+          <a href="{{ url_for('export_user', user_id=user.id) }}"
+             class="btn btn-sm btn-outline-success">
+            Export
+          </a>
+        </div>
+      </div>
+      {% if user.email %}
+        <small class="text-muted">Email: {{ user.email }}</small>
+      {% endif %}
+    </li>
+  {% endfor %}
+</ul>
+
+<div class="d-grid mt-3">
+  <a href="{{ url_for('export_all') }}"
+     class="btn btn-outline-success touch-target">
+    Export ALL users to a single Excel
+  </a>
+</div>
+{% endblock %}
