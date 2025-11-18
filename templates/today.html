@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h4 class="mb-2">
+  {{ weekday_name }} - {{ date.strftime('%Y-%m-%d') }}
+</h4>
+
+{% if is_saturday %}
+  <div class="alert alert-info mt-3">
+    Saturday has no configured list. Enjoy your day off!
+  </div>
+{% else %}
+  {% if states %}
+    <ul class="list-group">
+      {% for state in states %}
+        <li class="list-group-item p-0 border-0 mb-2">
+          <!-- Each item is a form with a single big button for touch -->
+          <form method="post"
+                action="{{ url_for('toggle', state_id=state.id) }}">
+            <button type="submit"
+                    class="btn w-100 text-start touch-target
+                           {% if state.checked %}text-muted{% endif %}">
+              <span class="{% if state.checked %}text-decoration-line-through{% endif %}">
+                {{ state.text }}
+              </span>
+            </button>
+          </form>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="alert alert-warning mt-3">
+      No items configured for {{ weekday_name }} yet.
+      Go to <strong>Configure</strong> to add some.
+    </div>
+  {% endif %}
+{% endif %}
+{% endblock %}
