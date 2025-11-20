@@ -25,4 +25,4 @@ ENV FLASK_RUN_PORT=5000
 EXPOSE 5000
 
 # Default command: run Flask's built-in server
-CMD ["flask", "run"]
+CMD ["python", "app.py"]
