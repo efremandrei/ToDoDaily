@@ -33,7 +33,7 @@ import time
 from datetime import datetime, date
 from io import BytesIO
 import smtplib
-from email.mime_text import MIMEText
+from email.mime.text import MIMEText
 from openpyxl import Workbook
 
 # ---------------------------------------------------------------------------
@@ -89,7 +89,7 @@ class TodoTemplate(db.Model):
         3 = Wednesday
         4 = Thursday
         5 = Friday
-        6 = Saturday (unused in this app)
+        6 = Saturday
     """
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
@@ -235,8 +235,8 @@ def ensure_states_for_today(user: User):
     today = date.today()
     weekday_index = get_weekday_index(today)
 
-    # Only Sunday (0) through Friday (5) are considered valid working days.
-    if weekday_index > 5:
+    # Only Sunday (0) through Saturday (6) are considered valid working days.
+    if weekday_index > 6:
         return []
 
     date_str = today.isoformat()
@@ -331,7 +331,7 @@ def check_and_send_reminders():
     A reminder is sent if:
     - The user has email notifications enabled.
     - The current local time matches the user's configured time (HH:MM).
-    - There is a list for today (Sunday-Friday).
+    - There is a list for today (Sunday-Saturday).
     - All items for today are unchecked.
     - No email was already sent today.
     """
@@ -426,14 +426,22 @@ def start_email_thread():
 
 
 # ---------------------------------------------------------------------------
-# Flask lifecycle hooks
+# App setup (Flask 3 compatible)
 # ---------------------------------------------------------------------------
 
-@app.before_first_request
-def before_first_request():
-    """Initialize database and start the email thread before handling any request."""
-    init_db()
-    start_email_thread()
+def setup_app() -> None:
+    """Initialize database and start the email thread once at startup.
+
+    This is called at import time so it works both when running with
+    `python app.py` and when running under a WSGI server / `flask run`.
+    """
+    with app.app_context():
+        init_db()
+        start_email_thread()
+
+# Run setup immediately on import
+setup_app()
+
 
 
 # ---------------------------------------------------------------------------
@@ -586,7 +594,7 @@ def config_user(user_id: int):
         flash("User configuration saved.", "success")
         return redirect(url_for("config_user", user_id=user.id))
 
-    weekday_names = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+    weekday_names = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday","Saturday"]
 
     return render_template(
         "config_user.html",
@@ -615,9 +623,9 @@ def config_day(user_id: int, weekday: int):
         flash("You can only edit your own lists unless you are admin.", "danger")
         return redirect(url_for("today"))
 
-    # Weekday must be in Sunday (0) .. Friday (5).
-    if weekday < 0 or weekday > 5:
-        flash("Weekday must be between Sunday (0) and Friday (5).", "danger")
+    # Weekday must be in Sunday (0) .. Saturday (6).
+    if weekday < 0 or weekday > 6:
+        flash("Weekday must be between Sunday (0) and Saturday (6).", "danger")
         return redirect(url_for("config_user", user_id=user_id))
 
     user = User.query.get_or_404(user_id)
@@ -811,11 +819,6 @@ def export_all():
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    # When running directly with `python app.py`, ensure DB is ready and
-    # the email thread is started, then run the development server.
-    with app.app_context():
-        init_db()
-        start_email_thread()
-
-    # Bind to 0.0.0.0 so that Docker can publish the port.
+    # When running directly with `python app.py`, just run the server.
+    # setup_app() has already initialized the DB and email thread.
     app.run(host="0.0.0.0", port=5000, debug=True)
